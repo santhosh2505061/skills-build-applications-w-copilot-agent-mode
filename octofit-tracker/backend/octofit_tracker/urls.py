@@ -17,6 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 from .views import UserViewSet, TeamViewSet, ActivityViewSet, WorkoutViewSet, LeaderboardViewSet
+
+import os
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
@@ -29,16 +31,28 @@ router.register(r'leaderboard', LeaderboardViewSet)
 
 @api_view(['GET'])
 def api_root(request, format=None):
-    return Response({
-        'users': request.build_absolute_uri('users/'),
-        'teams': request.build_absolute_uri('teams/'),
-        'activities': request.build_absolute_uri('activities/'),
-        'workouts': request.build_absolute_uri('workouts/'),
-        'leaderboard': request.build_absolute_uri('leaderboard/'),
-    })
+    codespace_name = os.environ.get('CODESPACE_NAME')
+    if codespace_name:
+        base_url = f"https://{codespace_name}-8000.app.github.dev/api/"
+        return Response({
+            'users': base_url + 'users/',
+            'teams': base_url + 'teams/',
+            'activities': base_url + 'activities/',
+            'workouts': base_url + 'workouts/',
+            'leaderboard': base_url + 'leaderboard/',
+        })
+    else:
+        base_url = request.build_absolute_uri('/')
+        return Response({
+            'users': base_url + 'users/',
+            'teams': base_url + 'teams/',
+            'activities': base_url + 'activities/',
+            'workouts': base_url + 'workouts/',
+            'leaderboard': base_url + 'leaderboard/',
+        })
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', api_root, name='api-root'),
-    path('', include(router.urls)),
+    path('api/', api_root, name='api-root'),
+    path('api/', include(router.urls)),
 ]
